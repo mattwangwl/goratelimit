@@ -111,7 +111,7 @@ func (r *rateLimiter) do() {
 			}
 
 			// 判斷是否取不到或超過限額
-			if nowCount < 0 || nowCount > r.limit {
+			if nowCount < 1 || nowCount > r.limit {
 				if t, err := r.rdb.Get(key).Int64(); err != nil {
 				} else {
 					expireAt := time.Unix(0, t).Add(r.per)
@@ -179,7 +179,7 @@ func (r *rateLimiter) counterFromRedis(key, keyCount string, now time.Time) (int
 func (r *rateLimiter) getNowCount(cmds []redis.Cmder) (val int, err error) {
 	defer func() {
 		if rc := recover(); rc != nil {
-			val = -1
+			val = 0
 			err = ErrIncrSliceOutOfRange
 		}
 	}()
@@ -189,13 +189,13 @@ func (r *rateLimiter) getNowCount(cmds []redis.Cmder) (val int, err error) {
 			t := cmd.String()[strings.LastIndex(cmd.String(), ":")+2:]
 			c, err := strconv.Atoi(t)
 			if err != nil {
-				return -1, err
+				return 0, err
 			}
 			return c, nil
 		}
 	}
 
-	return -1, nil
+	return 0, nil
 }
 
 type Result struct {
